@@ -1,0 +1,13 @@
+version: '2.4'
+services:
+  nginx:
+    image: nginx:latest
+    container_name: gateway
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /volumes/gateway/conf.d:/etc/nginx/conf.d
+      - /volumes/gateway/nginx.conf:/etc/nginx/nginx.conf
+      - /volumes/gateway/logs:/var/log/nginx
