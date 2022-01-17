@@ -1,0 +1,10 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.idea
+jest-stare
+coverage
+yarn-error.log
+stats.html

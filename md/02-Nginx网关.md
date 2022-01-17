@@ -1,6 +1,6 @@
-> 这一篇中主要是部署`Nginx`网关中心，用来代理服务器中服务，网关系统具有一定的优缺点，也可以不采用此方案
+这一篇中主要是部署`Nginx`网关中心，用来代理服务器中服务。网关系统具有一定的优缺点，也可以不采用此方案
 
-> 使用`Nginx`网关需要使用到域名，没有域名无法处理
+> 使用`Nginx`网关需要使用域名，没有域名无法处理
 
 [TOC]
 
@@ -54,10 +54,8 @@
 
 ### Docker Compose 配置
 
-因为要使用 `Portainer`可视化工具 ，`Docker Compose` 语法版本为 **2.X**。
-
 ```yml
-version: '2.4'
+version: '3.9'
 services:
   nginx:
     image: nginx:latest
@@ -80,7 +78,7 @@ services:
 
 其中 **nginx.conf** 为 _配置文件_， `Docker` 挂载文件时，宿主机中需要具有此文件，所以需要在服务器中先创建好该文件
 
-![](./images/02/01.png)
+<img src=./images/02/01.png width="50%" />
 
 ### Nginx 文件
 
@@ -100,6 +98,8 @@ http {
     charset utf-8;
     server {
         listen 80;
+        error_log  /var/log/nginx/portainer/error.log;
+        access_log  /var/log/nginx/portainer/access.log;
         location / {
             proxy_pass http://10.0.24.12:9000;
         }
@@ -114,21 +114,30 @@ http {
 - http： 此模块用于处理 **HTTP** 监听配置，此模块中最重要是 **server** 属性，此属性表示 `虚拟服务器（站点）`，在 `虚拟服务器` 中可以监听端口，代理其它服务器或者挂载静态文件
   **serser 模块** 可以设置多个。
   - listen： 监听端口号
+  - error_log、access_log：设置日志路径,
   * location：此属性用于匹配 _URL 请求_，在这里直接使用 **proxy_pass** 属性代理 **9000** 端口
 
 > PS: 其它属性不熟悉的可以自行查询，都是些很简单的配置属性
 
-此时便可以使用 `Portainer`可视化客户端启动
+作为一个`网关()`，后续将要管理好多应用，为了方便查询日志，将每个应用日志分开存储，这也就是配置 **error_log**、**access_log** 的原因。
 
-![](./images/02/02.png)
+当然也可以不配置，在每一个应用中查看日志。
 
-如果不出意外的话会顺利启动
+日志存储目录需要预先定义。在 `Dockerfile` 中 使用了 **/volumes/gateway/logs** 挂载了 **/var/log/nginx/**。
 
-![](./images/02/03.png)
+> sudo mkdir -p /volumes/gateway/logs/portainer
+
+<img src=./images/02/01_01.png width="50%" />
+
+可以使用 `Portainer` 进行部署
+
+<img src=./images/02/02.png width="50%" />
+
+<img src=./images/02/03.png width="50%" />
 
 此时，如果直接访问 **80** 端口的话便会访问到 `Portainer` 页面
 
-![](./images/02/04.png)
+<img src=./images/02/04.png width="50%" />
 
 ## Nginx 配置
 
@@ -172,10 +181,12 @@ http {
 重新加载之后可以分别访问 **80** 和 **9000** 端口，来测试文件大小和访问速度
 
 - 9000
-  ![](./images/02/05.png)
+
+    <img src=./images/02/05.png width="50%" />
 
 * 80
-  ![](./images/02/06.png)
+
+  <img src=./images/02/06.png width="50%" />
 
 可以看到通过 `Nginx`网关代理压缩后的文件大小远远小于 **9000** 端口的，并且访问速度大大提高。这就是通过设置网关代理的好处之一
 
@@ -201,7 +212,7 @@ http {
 
 我的域名时是在 腾讯云 中购买的，在腾讯云已购买域名中配置子域名解析规则即可
 
-![](./images/02/07.png)
+<img src=./images/02/07.png width="50%" />
 
 我配置了一个 _portainer_ 子域名给 `Portainer`应用。 完整的子域名是 **portainer.mwjz.live**
 
@@ -212,7 +223,11 @@ http {
 ```conf
 server {
     listen 80;
+    #填写绑定证书的域名
     server_name portainer.mwjz.live;
+    #日志
+    error_log  /var/log/nginx/portainer/error.log;
+    access_log  /var/log/nginx/portainer/access.log;
     location / {
         proxy_pass http://10.0.24.12:9000;
     }
@@ -224,7 +239,7 @@ server {
 
 > docker exec -it gateway nginx -s reload
 
-![](./images/02/08.png)
+<img src=./images/02/08.png width="50%" />
 
 可以看到访问 **portainer.mwjz.live** 就可以访问到 `Portainer` 客户端，并且根据文件大小可以判断当前为 `Nginx` 网关代理的。
 
@@ -237,15 +252,15 @@ server {
 在当今时代 网站基本上都已经使用 `HTTPS` 了。
 `HTTPS` 需要申请证书，证书可以在 云服务器厂商中免费申请。申请也极为简单。
 
-![](./images/02/09.png)
+<img src=./images/02/09.png width="50%" />
 
 申请成功后下载 `Nginx` 版本然证书后上传服务器使用。
 
-![](./images/02/10.png)
+<img src=./images/02/10.png width="50%" />
 
 在此将证书上传到了 **/volumes/gateway/conf.d/ssl/portainer/** 目录。
 
-![](./images/02/11.png)
+<img src=./images/02/11.png width="50%" />
 
 因为配置 `Nginx` 网关时，将 **/etc/nginx/conf.d** 挂载到宿主机 **/volumes/gatewal/conf.d** 目录，
 所以也相当于存放在 `Nginx`容器的 **/etc/nginx/conf.d/ssl/portainer/** 目录。
@@ -258,6 +273,9 @@ server {
     listen 443 ssl;
     #填写绑定证书的域名
     server_name portainer.mwjz.live;
+    #日志
+    error_log  /var/log/nginx/portainer/error.log;
+    access_log  /var/log/nginx/portainer/access.log;
     #证书文件
     ssl_certificate /etc/nginx/conf.d/ssl/portainer/portainer.mwjz.live_bundle.crt;
     #证书密钥文件
@@ -274,6 +292,9 @@ server {
     listen 80;
     #填写绑定证书的域名
     server_name portainer.mwjz.live;
+    #日志
+    error_log  /var/log/nginx/portainer/error.log;
+    access_log  /var/log/nginx/portainer/access.log;
     location / {
         proxy_pass http://10.0.24.12:9000;
     }
@@ -300,13 +321,13 @@ server {
 
 此时便可以使用 `HTTPS` 协议访问
 
-![](./images/02/12.png)
+<img src=./images/02/12.png width="50%" />
 
 #### HTTP 跳转 HTTPS
 
 现在各大网站使用 `HTTPS` 协议后，使用 `HTTP` 访问时会返回 **307**，然后切换为 `HTTPS` 协议访问。
 
-![](./images/02/13.png)
+<img src=./images/02/13.png width="50%" />
 
 以上是使用 `HTTP` 协议访问 `Github`，可以看到返回了一个 **307**，随后就跳转 `HTTPS` 协议了。
 
@@ -319,6 +340,9 @@ server {
     listen 443 ssl;
     #填写绑定证书的域名
     server_name portainer.mwjz.live;
+    #日志
+    error_log  /var/log/nginx/portainer/error.log;
+    access_log  /var/log/nginx/portainer/access.log;
     #证书文件
     ssl_certificate /etc/nginx/conf.d/ssl/portainer/portainer.mwjz.live_bundle.crt;
     #证书密钥文件
@@ -344,7 +368,7 @@ server {
 
 此时使用 `HTTP` 协议请求 `Portainer` 便也会返回 **307**，随后使用 `HTTPS` 协议请求。
 
-![](./images/02/14.png)
+<img src=./images/02/14.png width="50%" />
 
 #### HTTP2
 
@@ -356,6 +380,9 @@ server {
     listen 443 ssl http2;
     #填写绑定证书的域名
     server_name portainer.mwjz.live;
+    #日志
+    error_log  /var/log/nginx/portainer/error.log;
+    access_log  /var/log/nginx/portainer/access.log;
     #证书文件
     ssl_certificate /etc/nginx/conf.d/ssl/portainer/portainer.mwjz.live_bundle.crt;
     #证书密钥文件
@@ -374,8 +401,8 @@ server {
 
 > docker exec -it gateway nginx -s reload
 
-![](./images/02/15.png)
+<img src=./images/02/15.png width="50%" />
 
 > PS：如果没有 **协议** 选项，使用右键打开
 
-![](./images/02/16.png)
+<img src=./images/02/16.png width="50%" />

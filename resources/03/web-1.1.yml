@@ -1,0 +1,30 @@
+version: '3.9'
+
+volumes:
+  web-html:
+    name: web-html
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /volumes/web/html
+  web-nginx:
+    name: web-nginx
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /volumes/web/nginx
+
+services:
+  nginx:
+    image: yxs970707/deploy-web-demo:1.0.1
+    container_name: web
+    restart: always
+    ports:
+      - 7777:80
+    volumes:
+      - web-html:/usr/share/nginx/html
+      - web-nginx:/etc/nginx
+    environment:
+      SERVER_URL: http://jsonplaceholder.typicode.com
