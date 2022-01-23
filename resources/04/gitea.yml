@@ -1,0 +1,60 @@
+version: '3.9'
+# 创建自定义网络
+networks:
+  gitea:
+    name: gitea
+    driver: bridge
+
+services:
+  ## 数据库服务
+  db:
+    image: postgres:latest
+    container_name: gitea_db
+    restart: always
+    networks: 
+      - gitea  # 加入到gitea网络
+    ports: 
+      - 3003:5432
+    environment:
+      - POSTGRES_USER=gitea             # PGSQL默认用户
+      - POSTGRES_PASSWORD=gitea         # PGSQL默认密码
+      - POSTGRES_DB=gitea               # PGSQL默认数据库
+    volumes:
+      - /volumes/gitea/db:/var/lib/postgresql/data
+  #gitea服务
+  server:
+    image: gitea/gitea:latest
+    container_name: gitea_server
+    restart: always
+    networks:
+      - gitea  # 加入到gitea网络
+    ports:
+      - '3000:3000'                       # HTTP服务端口
+      - '3001:22'                         # SSH服务器端口
+    environment:
+      - USER_UID=1000                     # 运行容器使用的 UID  UID和GID是用于匿名数据卷挂载，
+      - USER_GID=1000                     # 运行容器使用的 GID
+      - APP_NAME=gitea                    
+      - PROTOCOL=http                     # 服务使用的访问协议
+      - HTTP_PORT=3000                    # HTTP 侦听端口 默认为3000
+      - SSH_PORT=22                       # 克隆 URL 中显示的 SSH 端口
+      - DOMAIN=gitea.mwjz.live            # UI显示的 HTTP克隆URL
+      - LANDING_PAGE=explore
+      - ROOT_URL=https://gitea.mwjz.live # 服务器的对外 URL
+      - DB_TYPE=postgres                  # 数据库类型
+      - DB_HOST=db                        # 数据库连接地址, 使用network形式连接, serverName或者 containerName
+      - DB_NAME=gitea                     # 数据库名称
+      - DB_USER=gitea                     # 数据库连接用户
+      - DB_PASSWD=gitea                   # 数据库连接密码
+
+      - DISABLE_REGISTRATION=true         # 禁用用户注册，启用后只允许管理员添加用户
+      - SHOW_REGISTRATION_BUTTON=false    # 是否显示注册按钮
+      - REQUIRE_SIGNIN_VIEW=true          # 是否所有页面都必须登录后才可访问
+      
+    volumes:
+      - /volumes/gitea/server/data:/data
+      - /volumes/gitea/server/config:/etc/config
+      - /volumes/gitea/server/timezone:/etc/timezone:ro
+      - /volumes/gitea/server/localtime:/etc/localtime:ro
+    depends_on:
+      - db

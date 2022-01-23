@@ -54,7 +54,7 @@
 
 ### Docker Compose 配置
 
-```yml
+```yml   
 version: '3.9'
 services:
   nginx:
