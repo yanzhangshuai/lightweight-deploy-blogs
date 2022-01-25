@@ -50,6 +50,8 @@ services:
       - DISABLE_REGISTRATION=true         # 禁用用户注册，启用后只允许管理员添加用户
       - SHOW_REGISTRATION_BUTTON=false    # 是否显示注册按钮
       - REQUIRE_SIGNIN_VIEW=true          # 是否所有页面都必须登录后才可访问
+      - GITEA__webhook__SKIP_TLS_VERIFY=true   # webhook 跳过 tls 验证
+      - GITEA__webhook__DELIVER_TIMEOUT=10     # webhook 超时时间
       
     volumes:
       - /volumes/gitea/server/data:/data

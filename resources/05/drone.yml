@@ -1,0 +1,70 @@
+version: '3.9'
+# 创建自定义网络
+networks:
+  drone:
+    name: drone
+    driver: bridge
+services:
+  # 数据库服务
+  db:
+    image: postgres:latest
+    container_name: drone_db
+    restart: always
+    networks: 
+      - drone  # 加入到drone网络
+    ports: 
+      - '7931:5432'
+    environment:
+      - POSTGRES_USER=drone             # PGSQL默认用户
+      - POSTGRES_PASSWORD=drone         # PGSQL默认密码
+      - POSTGRES_DB=drone               # PGSQL默认数据库
+    volumes:
+      - /volumes/drone/db:/var/lib/postgresql/data
+  # Drone Server 服务
+  server:   
+    image: drone/drone:2.8.0           # 目前drone最新版本为 2.8.0
+    container_name: drone_server
+    restart: always
+    networks: 
+      - drone  # 加入到drone网络
+    ports:
+      - '7929:80'
+    environment:
+      - DRONE_SERVER_PROTO=http                                                   # 访问协议，创建webHooks和重定向
+      - DRONE_SERVER_HOST=82.157.55.94:7929                                       # 主机名称，创建webHooks和重定向
+      - DRONE_RPC_SECRET=e1ad8a7f3dbc68ca9c21bcc949335009                         # 与 drone runner 通讯的密钥 
+      - DRONE_USER_CREATE=username:yxs970707,admin:true                           # 管理员账户
+      - DRONE_DATABASE_DRIVER=postgres                                            # 数据库类型
+      - DRONE_DATABASE_DATASOURCE=postgres://drone:drone@db/drone?sslmode=disable # 数据库连接
+      - DRONE_GIT_ALWAYS_AUTH=true                                                # 使用 oauth 身份验证信息拉取代码
+      - DRONE_GITEA_SERVER=https://gitea.mwjz.live                                # gitea服务器地址
+      - DRONE_GITEA_CLIENT_ID=2c921d85-e40e-41f8-90e0-c77c383786b5                # gitea 客户端 id
+      - DRONE_GITEA_CLIENT_SECRET=ZVZoRWK6jR5mqgAIm6sB5VX6C2LPK1sYKv4hQWyTdULu    # gitea 客户端 密钥
+      - DRONE_GITEA_SKIP_VERIFY=false                                              # 禁用 gitea 链接时 tls 验证
+   
+    volumes:
+      - /volumes/drone/server:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - db
+  # Drone Docker Runner
+  runner:
+    image: drone/drone-runner-docker:1.8.0  # 目前drone-runner-docker最新版本为 1.8.0
+    container_name: drone_runner
+    restart: always
+    networks: 
+      - drone  # 加入到drone网络
+    ports:
+      - '7930:3000'
+    environment:
+      - DRONE_RUNNER_NAME=docker-runner
+      - DRONE_RUNNER_CAPACITY=10                                                  # 限制runner可执行的并发管道数量
+      - DRONE_RPC_PROTO=http                                                      # 访问drone server 协议
+      - DRONE_RPC_HOST=server                                                     # 访问drone server 服务器地址
+      - DRONE_RPC_SECRET=e1ad8a7f3dbc68ca9c21bcc949335009                         # 与 drone server 通讯的密钥 
+      - DRONE_UI_USERNAME=yxs970707                                               # Drone Runner 的 UI 用户账号
+      - DRONE_UI_PASSWORD=yxs970707                                               # Drone Runner 的 UI 用户密码
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    depends_on:
+      - server

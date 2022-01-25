@@ -4,12 +4,12 @@
 
 但部署完后发现， `Gitlab` 资源占用太大了。就算优化之后也要占用 **3g** 内存，最后只好放弃这一方案。
 
-随后找到了 `Gitea`、`Gogs` 这两个轻量级的私有仓库，两个都是优秀的轻量级私有仓库。
+随后发现了 `Gitea`、`Gogs` 这两个轻量级的私有仓库，两个都是优秀的轻量级私有仓库。
 
-后对它们进行了对比，发现 `Gitea` 是从 `Gogs` 项目 **fork** 出的。
+后对它们进行了对比，发现 `Gitea` 是从 `Gogs` 项目 **fork** 出的项目。
 官方给出了 **fork** 理由：https://blog.gitea.io/2016/12/welcome-to-gitea/，有兴趣的看看
 
-也就是 `Gitea` 使用上是优于 `Gogs` 的，最后就选择了 `Gitea`
+也就是 `Gitea` 使用上是优于 `Gogs` 的，就选择了 `Gitea`
 
 
 `Gitea` 虽然是轻量级，但也具有强大的功能，可以放心使用。
@@ -17,7 +17,7 @@
 https://docs.gitea.io/zh-cn/
 
 
-# 部署Gitea
+# Gitea
 
 ## 数据库选择
 `Gitea` 支持`mysql` , `postgres`, `mssql`, `tidb` 、`sqlite3` 多种数据库。
