@@ -1,0 +1,73 @@
+kind: pipeline          # 定义一个管道
+type: docker            # 定义管道类型
+name: build              # 定义管道名称
+
+volumes:                # 声明数据卷
+- name: node_modules    # 数据卷名称
+  host:                 # Host Volume
+    path: /volumes/drone/volumes/web/node_modules   # 宿主机目录
+
+clone:
+  disable: false        # 启用代码拉取
+
+steps:
+  - name: build-project   # 步骤名称
+    image: node:16.13.2   # 使用镜像
+    depends_on: [clone]   # 依赖的步骤，
+    volumes:              # 挂载数据卷
+    - name: node_modules  # 数据卷名称
+      path: /drone/src/node_modules # 容器内目录
+    commands:             # 执行命令
+      - npm config set registry https://registry.npm.taobao.org     # 切换淘宝镜像
+      - npm install       # 安装node_modules包
+      - npm run build     # 执行编译
+
+  - name: build-tags
+    image: yxs970707/drone-web-tags  # 使用镜像
+    depends_on: [clone]   # 依赖的步骤，
+    settings:
+      tags:
+        - latest
+
+  - name: build-image     # 步骤名称
+    image: plugins/docker # 使用镜像
+    depends_on: [build-tags, build-project] # 依赖步骤
+    settings:             # 当前设置
+      username:           # 账号名称
+        from_secret: docker_username
+      password:           # 账号密码
+        from_secret: docker_password
+      dockerfile: deploy/Dockerfile # Dockerfile地址， 注意是相对地址
+      repo: yxs970707/deploy-web-demo # 镜像名称
+
+
+---
+
+kind: pipeline
+type: docker
+name: deploy
+
+depends_on: # 依赖build管道
+  - build
+
+clone:
+  disable: true # 禁用拉取、
+
+steps:
+
+  - name: deploy-project
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: server_host
+      user:
+        from_secret: server_username
+      password:
+        from_secret: server_password
+      port: 22
+      # insecure: true
+      command_timeout: 3m
+      script:
+        - echo ===开始部署===
+        - sh /sh/docker/web/deploy.sh
+        - echo ===部署成功
