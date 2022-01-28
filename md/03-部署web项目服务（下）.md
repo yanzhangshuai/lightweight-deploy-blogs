@@ -1,30 +1,32 @@
 # 配置接口代理
 
-在 web 项目中，请求后端接口最常用的一种方式就是使用代理模式，反向代理会让浏览器认为是同源路径，也就实现了跨域的操作。
+前后端分离情况下，前端请求后端接口最常用的一种方式就是使用反向代理，反向代理会让浏览器认为是同源路径，也就实现了跨域操作。
 
-目前流行的前端打包器，`webpack`、`vite`等 开发模式中，都设置反向代理地址。 而 `Nginx` 服务器，最重要的一个功能也就是设置反向代理。
-之前的 `网关`实现方式就是反向代理功能。此篇中主要就是配置接口代理 和通过镜像参数 配置 `Nginx` 中接口代理地址
+目前流行的前端打包器，`webpack`、`vite` 在开发模式，都具有反向代理的配置。
+
+`Nginx` 服务器，反向代理也是最重要的功能之一，之前的 `网关`实现方式就是使用了反向代理。此篇中主要是配置接口代理 和 通过镜像参数 配置 `Nginx` 接口代理
 
 ## Dev 测试
 
-当前使用的 web 模板项目中对于开发环境的 API 代理和访问接口请求都已经设置好了。只需要做很简单的配置。
-测试接口是在网上找到的一个接口，接口地址为： http://jsonplaceholder.typicode.com/posts/1
+当前使用的 web 模板项目中对于开发环境的 API 代理和访问接口请求都已经设置好了。只需要设置一下配置地址。
 
-1.  在 **.env.development** 文件中配置代理域名地址
+接口是在网上找的一个，接口地址为： http://jsonplaceholder.typicode.com/posts/1
+
+1.  **.env.development** 文件中配置代理域名地址
 
     <img src=./images/03/25.png width=50% />
 
-2.  使用 **Http** 模块进行请求
+2.  使用 **Http** 模块请求
 
     <img src=./images/03/26.png width=50% />
 
-使用 `npm run dev` 运行便可以看到请求结果，一个简单的开发环境的代理接口访问操作。
+配置完毕后使用 `npm run dev` 运行便可以看到请求结果。
 
 <img src=./images/03/27.png width=50% />
 
 ## Nginx 代理接口
 
-使用 `Nginx` 代理也极为简单，只需要配置相应的 **location**
+`Nginx` 中使用代理也极为简单，只需要配置 **location**
 
 ```conf
 events {
@@ -61,18 +63,18 @@ http {
 
 ```
 
-上述配置文件中 第二个 **location** 就是配置 API 接口代理。
+第二个 **location** 就是配置 API 接口代理。
 
-**location** 后是监听的路由，配置了监听路由为 以 **/api** 开头的请求路由。然后将请求转发到 **proxy_pass** 属性值
+**location** 配置了监听路由以 **/api** 开头的请求路由。将 **/api** 开头的请求路由转发到 **proxy_pass** 属性值
 
-监听路由使用了正则匹配方**proxy_pass** 属性值中的 **$1** 是 **location** 监听路由中 **(.\*)** 的匹配项。
+监听路由使用了正则匹配， **proxy_pass** 属性值中的 **$1** 是 **location** 监听路由中 **(.\*)** 的匹配项。
 
 注意：
 
-1.  使用域名做反向代理地址时，如果添加 **resolver** 解析。 https://developer.aliyun.com/article/486252
+1.  使用域名做反向代理地址时，需要添加 **resolver** 解析。 https://developer.aliyun.com/article/486252
 2.  使用域名访问时，需要改变 **Host** 请求头，否则会报 **403**。https://blog.csdn.net/liyyzz33/article/details/95340765
 
-添加完毕之后可以重新打包镜像然后本地部署测试。在正常的情况下就如下图可以正常访问。
+添加成功后可以重新打包镜像然后本地部署测试。正常的情况下就如下图可以正常访问。
 
 镜像版本改为 **1.0.1**
 
@@ -82,19 +84,21 @@ http {
 
 ## 代理地址参数化
 
-接下来做这样一件操作，将 API 代理地址变为启动容器可参数化配置。
-这样可以将 API 代理地址作为一个变量的形式脱离于镜像。扩展性更好。
+接下来完成一个操作：将 API 代理地址变为启动容器参数化配置。
+
+参数化可以将 API 代理地址作为一个变量的形式脱离于镜像。具有更好的扩展性。
 
 ### 代理地址参数化思路
 
-代理地址参数化这个操作可以分为两步思考
+代理地址参数化这个操作可以分为两个步骤思考
 
 #### 使用 `Nginx` 变量
 
-第一步是将 `Nginx` 中 **proxy_pass** 属性值使用变量设置，`Nginx` 配置中是支持变量，变量定义是以 **$** 开头的。
+第一步是将 `Nginx` 中 **proxy_pass** 属性值变量化，`Nginx` 配置中是支持变量的，变量定义是以 **$** 开头的。
 
-`Nginx` 自身有许多变量提供，例如 **$host**，并且 `Nginx` 还支持自定义变量。 可以在配置文件中定义变量，并且可以在属性值使用变量。
-所以 **proxy_pass** 属性值可以使用一个变量设置 **$SERVER_URL**。
+`Nginx` 自身有许多变量提供，例如 **$host**。 `Nginx` 还支持自定义变量。 可以使用 **set** 定义变量，使用变量可以设置属性值。
+
+**proxy_pass** 属性值可以使用一个变量设置 **$SERVER_URL**。
 
 ```conf
     location ~* /api/(.*) {
@@ -107,8 +111,11 @@ http {
         }
 ```
 
-**$SERVER_URL** 这个变量怎么来的呢？ `Nginx` 支持在一个文件中定义变量，**nginx.conf** 中使用 **include** 引入文件。
-也就是可以引用一个文件（**/etc/nginx/conf.d/\*.variable**），然后将变量定义在这个文件。
+**$SERVER_URL** 这个变量怎么定义呢？
+
+`Nginx` 支持在配置文件中定义变量，也支持在一个文件中定义变量，**nginx.conf** 中使用 **include** 引入定义变量的文件。
+
+配置文件中可以引用一个文件（**/etc/nginx/conf.d/\*.variable**），然后将变量定义在这个文件。
 
 ```conf
     server {
@@ -135,9 +142,9 @@ http {
 #### 定义 Nginx 变量
 
 第二步是定义创建 **/etc/nginx/conf.d/\*.variable** 文件逻辑
-创建文件逻辑需要在 `Dockerfile` 定义。可以直接将逻辑写在 `Dockerfile` 中。
+这个逻辑需要在 `Dockerfile` 定义。可以直接写在 `Dockerfile` 中。
 
-在此我使用一个 **.sh** 文件创建，在 `Dockerfile` 中定义执行 **.sh** 文件配置。
+在此我定义了一个 **.sh** 文件， `Dockerfile` 中定义执行 **.sh** 文件。
 
 ```sh
 #/bin/bash
@@ -155,7 +162,7 @@ echo set \$SERVER_URL $SERVER_URL\; > /etc/nginx/conf.d/server.variable
 
 **deploy** 目录中创建一个 **variable.sh** 文件，此文件中写入 **创建变量文件**
 
-第一行就是使用 `echo` 命令将设置变量写入到 **/etc/nginx/conf.d/server.variable** 文件中。
+`echo` 命令将设置变量写入到 **/etc/nginx/conf.d/server.variable** 文件中。
 
 第一个 **$SERVER_URL** 是 `Nginx` 变量名称，第二个 **$SERVER_URL** 是 `Nginx` 变量值，而这个变量值又是一个变量，这个变量由 `Docker` 提供。
 
@@ -196,27 +203,27 @@ EXPOSE 80
 4. 设置 **sh** 执行权限
 5. **RUN** 命令执行 **sh** 文件
 
-新增的语句就是将 **sh** 文件写入到镜像中，进行执行。并且设置了环境变量初始值。
+新增的命令是将 **sh** 文件写入到镜像中，进行执行。并设置了环境变量初始值。
 
 ### 代理地址参数化部署
 
 #### 测试部署
 
-此时可以进行打包镜像然后本地测试，在此直接贴出测试结果。
+此时可以构建镜像进行本地测试，在此直接贴出测试结果。
 
 <img src=./images/03/31.png width=50% />
 
-并且可以进入容器内部查看 **/etc/nginx/conf.d/server.variable** 文件是否写入成功。
+进入容器内部查看 **/etc/nginx/conf.d/server.variable** 文件已经成功写入。
 
 <img src=./images/03/32.png width=50% />
 
-启动容器时没有设置 **-e** 属性，默认使用的是镜像内部默认值。也可以启动容器时指定环境变量。有兴趣朋友可以将默认值改为其它值就行测试。
+启动容器时没有设置 **-e** 属性，默认使用的是镜像内部默认值。可以启动容器时指定环境变量。有兴趣朋友可以将默认值改为其它值就行测试。
 
 > docker run --name web -p 7777:80 -itd -e SERVER_URL=http://jsonplaceholder.typicode.com yxs970707/deploy-web-demo:1.0.1
 
 #### 服务器部署
 
-测试完毕后，将镜像推送到 `Docker Hub`, 进行重新部署
+测试成功后，将镜像推送到 `Docker Hub`, 进行重新部署
 
 注意：重新部署前注意要清除原容器和 Volume,以保持整洁
 
@@ -258,7 +265,7 @@ services:
 以上是新的 **YMAL** 配置文件，
 配置文件中添加了一个新增了一个新的 **Volume**，用于将容器内 **/etc/ninx** 目录文件暴露。
 
-并且启动时配置了 **SERVER_URL** 环境变量。
+启动时配置了 **SERVER_URL** 环境变量。
 
 > PS： 需要创建 **/volumes/web/nginx** 和 **/volumes/web/html** 目录
 
@@ -266,17 +273,15 @@ services:
 
 <img src=./images/03/34.png width=50% />
 
-因为使用了 **Volume** 挂载了 **/etc/nginx**，所以直接在宿主机目录查看 **.sh** 和 **.variable** 文件
+因为使用了 **Volume** 挂载了 **/etc/nginx**，可以在宿主机目录查看 **.sh** 和 **.variable** 文件
 
 <img src=./images/03/35.png width=50% />
 
-<br/>
-
 # 设置网关
 
-部署完 **web** 项目后，接下来设置网关。
+部署完 web 项目后，接下来设置这个服务的`网关`。
 
-**web** 要部署到主域名。
+当前服务要部署到主域名。
 
 第一步
 

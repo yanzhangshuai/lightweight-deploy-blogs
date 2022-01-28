@@ -68,6 +68,10 @@ steps:
       # insecure: true
       command_timeout: 3m
       script:
-        - echo ===开始部署===
-        - sh /sh/docker/web/deploy.sh
-        - echo ===部署成功
+        - echo ====开始部署=======
+        - docker pull yxs970707/deploy-web-demo:latest
+        - docker-compose -p web down
+        - docker volume rm web-nginx
+        - docker-compose -f /yml/docker-compose/web.yml -p web up -d
+        - docker rmi $(docker images | grep deploy-web-demo | grep none | awk  '{print $3}')
+        - echo ====部署成功=======
