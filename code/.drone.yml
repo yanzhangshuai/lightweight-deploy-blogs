@@ -38,7 +38,8 @@ steps:
       password:           # 账号密码
         from_secret: docker_password
       dockerfile: deploy/Dockerfile # Dockerfile地址， 注意是相对地址
-      repo: yxs970707/deploy-web-demo # 镜像名称
+      registry: docker.mwjz.live  # 私有镜像仓库地址
+      repo: docker.mwjz.live/mwjz/deploy-web-demo # 镜像名称
 
 
 ---
@@ -53,8 +54,10 @@ depends_on: # 依赖build管道
 clone:
   disable: true # 禁用拉取、
 
-steps:
+image_pull_secrets:
+  - docker_auth_config
 
+steps:
   - name: deploy-project
     image: appleboy/drone-ssh
     settings:
@@ -69,7 +72,7 @@ steps:
       command_timeout: 3m
       script:
         - echo ====开始部署=======
-        - docker pull yxs970707/deploy-web-demo:latest
+        - docker pull docker.mwjz.live/mwjz/deploy-web-demo:latest
         - docker-compose -p web down
         - docker volume rm web-nginx
         - docker-compose -f /yml/docker-compose/web.yml -p web up -d
