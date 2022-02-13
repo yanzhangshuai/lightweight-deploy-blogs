@@ -11,24 +11,40 @@ clone:
   disable: false        # 启用代码拉取
 
 steps:
-  - name: build-project   # 步骤名称
-    image: node:16.13.2   # 使用镜像
-    depends_on: [clone]   # 依赖的步骤，
-    volumes:              # 挂载数据卷
-    - name: node_modules  # 数据卷名称
-      path: /drone/src/node_modules # 容器内目录
-    commands:             # 执行命令
-      - npm config set registry https://registry.npm.taobao.org     # 切换淘宝镜像
-      - npm install       # 安装node_modules包
-      - npm run build     # 执行编译
-
-  - name: build-tags
+  # 生成版本号标签
+  - name: build-tags  
     image: yxs970707/drone-web-tags  # 使用镜像
     depends_on: [clone]   # 依赖的步骤，
     settings:
       tags:
         - latest
 
+  # 私有 NPM 仓库登录     
+  - name: npm-login 
+    image: robertstettner/drone-npm-auth
+    settings:
+      registry: https://npm.mwjz.live/
+      username:
+        from_secret: npm_username
+      password:
+        from_secret: npm_password
+      email:
+        from_secret: npm_email
+  
+  # 编译项目
+  - name: build-project   # 步骤名称
+    image: node:16.13.2   # 使用镜像
+    depends_on: [npm-login]   # 依赖的步骤，
+    volumes:              # 挂载数据卷
+    - name: node_modules  # 数据卷名称
+      path: /drone/src/node_modules # 容器内目录
+    commands:             # 执行命令
+      - npm config set registry https://npm.mwjz.live/
+      - npm config get
+      - npm install       # 安装node_modules包
+      - npm run build     # 执行编译
+
+ # 打包Docker镜像
   - name: build-image     # 步骤名称
     image: plugins/docker # 使用镜像
     depends_on: [build-tags, build-project] # 依赖步骤

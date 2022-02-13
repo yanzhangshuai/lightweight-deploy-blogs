@@ -119,6 +119,10 @@ server {
 
 ```
 
+<img src=./images/06/03_01.png width=50% />
+
+<img src=./images/06/03_02.png width=50% />
+
 重启网关服务
 
 > docker exec -it gateway nginx -s reload

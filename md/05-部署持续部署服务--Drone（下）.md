@@ -201,7 +201,7 @@ steps:
 
 代码编译完毕后，下一个操作就是制作镜像并推送仓库了。
 
-`Drone` 官方提供了 `plugins/docker` 镜像用于构建镜像并将镜像直接推送到镜像仓库。
+`Drone` 社区中提供了 `plugins/docker` 镜像插件用于构建镜像并将镜像直接推送到镜像仓库。
 
 ```yml
 kind: pipeline          # 定义一个管道
@@ -354,7 +354,7 @@ clone:
 
 之前说过，`Drone` 提供了多种 `Runner（执行器）` 和 `管道（Pipeline）` 类型， 但某些类型可以使用容器化统一化管理。
 
-`Drone` 提供了 `SSH` 镜像插件， [`appleboy/drone-ssh`](https://plugins.drone.io/appleboy/drone-ssh/)。
+`Drone` 社区中提供了 `SSH` 连接镜像插件， [`appleboy/drone-ssh`](https://plugins.drone.io/appleboy/drone-ssh/)。
 
 配置此步骤前,需要先改动 之前 **web** 项目的 `Docker Compose` 文件
 

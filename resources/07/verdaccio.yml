@@ -1,0 +1,14 @@
+
+version: '3.9'
+
+services:
+  verdaccio:
+    image: verdaccio/verdaccio
+    container_name: verdaccio
+    restart: always
+    ports:
+      - '4873:4873'
+    volumes:
+      - /volumes/verdaccio/conf:/verdaccio/conf
+      - /volumes/verdaccio/storage:/verdaccio/storage
+      - /volumes/verdaccio/plugins:/verdaccio/plugins

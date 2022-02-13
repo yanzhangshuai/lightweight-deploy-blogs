@@ -1,0 +1,49 @@
+# 包存储地址
+storage: /verdaccio/storage
+
+# 插件存储地址
+plugins: /verdaccio/plugins
+
+# UI相关信息
+web:
+  enable: true # 开启 Web 页面
+  title: Verdaccio  # Web 页面标题
+
+# 身份认证
+auth:
+  htpasswd:                           # 默认情况下使用的 htpasswd 插件作为身份认证
+    file: /verdaccio/conf/htpasswd # htpasswd 文件为加密认证信息文件
+    max_users: -1                     # 最大用户数量， -1 表示禁用新用户注册
+
+# 上行链路
+uplinks:
+  npmjs:                                    # 上行名称，随便定义
+    url: https://registry.npmjs.org/        # 上行地址
+    timeout: 30s                            # 超时时间
+ 
+                          
+  taobao:                                   # 上行名称
+    url: https://registry.npm.taobao.org/   # 上行地址
+    timeout: 30s                          
+
+# 包访问设置, 可以根据名称对包做不同权限设置
+packages:
+  '@*/*':
+    access: $authenticated                # 登录用户才允许访问
+    publish: $authenticated               # 登录用户才允许发布
+    proxy: taobao                         # 代理上行链路地址
+
+  '**':
+    access: $authenticated                # 登录用户才允许访问
+    publish: $authenticated               # 登录用户才允许发布
+    proxy: taobao                         # 代理上行链路地址
+
+server:
+  keepAliveTimeout: 30                    # 服务器保持活动链接的时间,较大的包可能会消耗一定时间,此属性就是设置活动链接时间
+
+middlewares:
+  audit:
+    enabled: true
+
+# 日志
+logs: { type: stdout, format: pretty, level: http  }
